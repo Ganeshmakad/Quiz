@@ -1,83 +1,119 @@
-let namebox = document.getElementById("playerbox");
-let name1 = localStorage.getItem("naam");
+let nameBox = document.getElementById("playerbox");
+let name = localStorage.getItem("name1");
 
-let showName= () =>{
-   namebox.textContent = "player :"+name1;
+let showName = () =>
+{
+    nameBox.textContent="Player : "+name;
 }
 showName();
 
-let index = 0 ;
-let score = 0;
+let goToLeaderboard  = ()=>
+{
+    window.location.href="./leader.html";
+}
+let index=0;
+let score=0;
 let a1=[];
+
+let loadQuestion = async () =>
+{
+    a1 = await fetch("./quiz.json");
+    a1 = await a1.json();
+    showQuestion();
+}
 
 let questionBox = document.getElementById("question")
 let optionBox = document.getElementById("options")
 let nextbtn = document.getElementById("next-btn")
+let scoreTag = document.getElementById("score")
+let leaderBtn = document.getElementById("leader-btn")
 let current;
 
-let loadQuestion= async() =>{ 
-
-    a1 = await fetch("./quiz.json") 
-    a1 = await a1.json(); 
-    showQuestion();
-}
-
-
-let showQuestion= () =>{
-    current = a1[index]
+let showQuestion = ()=>
+{
+    current = a1[index];
     questionBox.textContent = current.question;
     current.options.forEach(
-        (str,i)=>{
-            let b1  = document.createElement("button");
+        (str,i)=>
+        {
+            let b1 = document.createElement("button");
             b1.textContent = str;
-            b1.classList.add("option-btn");
+            b1.classList="option-btn";
             b1.addEventListener("click",
-                ()=>{
+                ()=>
+                {
                     checkAnswer(i);
                 }
             );
             optionBox.appendChild(b1);
         }
     );
-
 }
 
-
-let nextQuestion= ()=>{
+let nextQuestion = ()=>
+{
     index++;
-    optionBox.innerHTML ="";
+    optionBox.innerHTML="";
+    if(index===a1.length)
+    {
+        localStorage.setItem("quizCompleted",true)
+        showCompletedScreen();
+        let list = JSON.parse(localStorage.getItem("list")) || [] ;
+        
+        list.push(
+            {
+                name:name,
+                score:score
+        });
 
-    if(index>=a1.length){
-
-        questionBox.textContent = "Quiz completed"
-        nextbtn.style.display = "None";
+        localStorage.setItem("list",JSON.stringify(list));
         return;
     }
-
     showQuestion();
-   
 }
- let scoreTag = document.getElementById("score")
-    
-    let checkAnswer = (click_index)=>
-    {
-        if (current.correct === click_index){
-            score++;
-            scoreTag.textContent = "score : "+score;
-        }
-        let buttonArray=document.querySelectorAll(".option-btn");
-    buttonArray.forEach(
+
+let checkAnswer = (click)=>
+{
+    let rightAns = current.correct;
+    let buttons = document.querySelectorAll(".option-btn");
+    buttons.forEach(
         (btn,i)=>
         {
             btn.disabled=true;
-            if(i===current.correct)
-            {
-                btn.style.backgroundColor="green";
-                return;
-            }
-            btn.style.backgroundColor="red";
+            if(i===rightAns)
+                btn.style.backgroundColor="Green";
+            else
+                btn.style.backgroundColor="Red";
         }
     );
+    if(click===rightAns)
+    {
+        score++;
+        scoreTag.textContent = "Score : "+score;
+    }
+} 
+
+let showCompletedScreen = ()=>
+{
+        questionBox.textContent="Quiz Completed";
+        nextbtn.style.display = "none";
+        leaderBtn.style.display = "block";
+        let homebtn = document.createElement("button");
+        homebtn.textContent="Home";
+        homebtn.classList="option-btn"
+        homebtn.addEventListener("click",
+            ()=>
+            {
+                localStorage.removeItem("quizCompleted");
+                window.location.href="./index.html";
+            }
+        );
+        optionBox.appendChild(homebtn);
 }
-    
-loadQuestion();
+
+let completed = localStorage.getItem("quizCompleted");
+
+if(completed== "true")
+    showCompletedScreen();
+else
+    loadQuestion();
